@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Reservation | Home</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ...existing styles... */
+    .hero-slider {
+      width: 100%;
+      height: 240px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      margin-bottom: 2em;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+    .hero-slider .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      position: absolute;
+      left: 0; top: 0;
+      transition: opacity 0.5s;
+      border-radius: 18px;
+    }
+    .slider-arrow.left, .slider-arrow.right {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.4);
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      box-shadow: none !important;
+    }
+    .slider-arrow.left {
+      left: 32px;
+    }
+    .slider-arrow.right {
+      right: 32px;
+    }
+    .slider-arrow.left:hover, .slider-arrow.right:hover {
+      background: rgba(0,0,0,0.7);
+    }
+    @media (max-width: 750px) {
+      .hero-slider { height: 500px; }
+      .slider-arrow.left { left: 10px; }
+      .slider-arrow.right { right: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+      <a routerLink="/" routerLinkActive="active">Home</a>
+      <a routerLink="/login">Login</a>
+      <a routerLink="/about">About Us</a>
+      <a routerLink="/contact">Contact Us</a>
+    </nav>
+  </header>
+  <section class="hero">
+    <div class="hero-slider" style="position:relative;">
+      <img *ngFor="let img of images; let i = index"
+           [src]="img"
+           [alt]="'Hotel Banner ' + (i + 1)"
+           class="hero-img"
+           [style.display]="current === i ? 'block' : 'none'">
+      <button class="slider-arrow left" aria-label="Previous" (click)="onArrowClick('left')"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="slider-arrow right" aria-label="Next" (click)="onArrowClick('right')"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+    <h1>Book Your Perfect Stay — Anytime, Anywhere</h1>
+    <p>Experience luxury, comfort, and convenience at RoyalStay Hotel. Your journey begins here.</p>
+    <a routerLink="/login" class="btn">Book Now</a>
+    <br>
+  </section>
+  <section class="container" ><br>
+    <a href="#services"><h2 class="text-center" id="services">Our Services</h2></a>
+    <div class="service-cards">
+      <div class="service-card">
+        <i class="fa-solid fa-bed"></i>
+        <h3>Luxury Rooms</h3>
+        <p>Spacious, elegant rooms with premium amenities for your comfort.</p>
+      </div>
+      <div class="service-card">
+        <i class="fa-solid fa-headset"></i>
+        <h3>24/7 Support</h3>
+        <p>Our staff is always available to assist you, day or night.</p>
+      </div>
+      <div class="service-card">
+        <i class="fa-solid fa-spa"></i>
+        <h3>Spa & Wellness</h3>
+        <p>Relax and rejuvenate with our exclusive spa and wellness services.</p>
+      </div>
+    <div class="service-card">
+      <i class="fa-solid fa-wifi"></i>
+      <h3>Free Wi-Fi</h3>
+      <p>Stay connected with complimentary high-speed internet throughout the hotel.</p>
+    </div>
+  </div>
+</section>
+<footer class="footer">
+    <div class="socials">
+      <a href="#"><i class="fab fa-facebook-f"></i></a>
+      <a href="#"><i class="fab fa-twitter"></i></a>
+      <a href="#"><i class="fab fa-instagram"></i></a>
+      <a href="#"><i class="fab fa-linkedin-in"></i></a>
+    </div>
+    <div class="mt-2">&copy; 2025 RoyalStay Hotel. All rights reserved.</div>
+    <div class="mt-2">123 Luxury Ave, City, Country | +1 234 567 890 | info&#64;royalstay.com</div>
+  </footer>
+</body>
+</html>

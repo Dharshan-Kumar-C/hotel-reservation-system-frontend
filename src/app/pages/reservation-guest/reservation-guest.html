@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Reservations | Hotel Reservation</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .main-panel { max-width: 1100px; margin: 2.5em auto; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2em 2em 1.5em 2em; }
+    .main-panel h2 { color: var(--navy); font-size: 2rem; font-weight: 700; margin-bottom: 1.5em; }
+    .section-title { color: var(--navy); font-size: 1.25rem; font-weight: 600; margin-bottom: 1em; }
+    .reservations-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2em; overflow: hidden; }
+    .reservations-table th, .reservations-table td { padding: 1em 1.2em; text-align: left; font-size: 1.05em; }
+    .reservations-table th { background: var(--light-gray); color: var(--navy); font-weight: 600; }
+    .reservations-table tr:nth-child(even) { background: #f3f4f8; }
+    .reservations-table tr:hover { background: #fffbe6; }
+    .status { font-weight: 600; border-radius: 8px; padding: 0.2em 0.7em; font-size: 0.95em; }
+    .status.confirmed { background: #e6f7e6; color: #1a7f37; }
+    .status.pending { background: #fffbe6; color: #b8860b; }
+    .status.cancelled { background: #ffe6e6; color: #d90429; }
+    .book-btn { background: var(--gold); color: var(--navy); font-weight: 600; border: none; border-radius: 8px; padding: 0.9em 2em; font-size: 1.08em; cursor: pointer; box-shadow: 0 2px 8px #0001; transition: background 0.18s, color 0.18s, transform 0.15s; margin-bottom: 1.5em; }
+    .book-btn:hover { background: var(--navy); color: var(--gold);  }
+    @media (max-width: 900px) { .main-panel { padding: 1em 0.5em; } }
+    @media (max-width: 700px) {
+      .main-panel { padding: 0.5em 0.2em; }
+    }
+    .action-icons { font-size: 1.2em; display: flex; gap: 0.7em; align-items: center; }
+    .action-icons i { cursor: pointer; color: var(--navy); transition: color 0.15s; margin-right: 0; }
+    .action-icons i:last-child { margin-right: 0; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.18); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-content { background: #fff; border-radius: 16px; box-shadow: 0 2px 16px #0002; padding: 2em 2em 1.5em 2em; max-width: 400px; width: 95vw; }
+    .modal h3 { color: var(--navy); margin-top: 0; margin-bottom: 1.2em; font-size: 1.2rem; font-weight: 700; }
+    .modal label { display: block; margin-bottom: 0.5em; font-weight: 500; }
+    .modal input, .modal select { width: 100%; height: 40px; padding: 0.5em; margin-bottom: 1em; border: 1px solid var(--light-gray); border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+    <a routerLink="/guest-dashboard">Dashboard</a>
+    <a routerLink="/profile">Profile</a>
+    <a routerLink="/login">Logout</a>
+    </nav>
+  </header>
+  <main class="main-panel">
+    <h2>My Reservations</h2>
+    <section>
+        <table class="reservations-table">
+        <thead>
+          <tr>
+            <th>Reservation ID</th>
+            <th>Room</th>
+            <th>Check-in Date</th>
+            <th>Check-out Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of reservations; let i = index">
+            <td>{{ r.id }}</td>
+            <td>{{ r.room }} <span style="color:var(--navy);font-size:0.98em;">({{ r.type }})</span></td>
+            <td>{{ r.checkin }}</td>
+            <td>{{ r.checkout }}</td>
+            <td><span class="status" [ngClass]="getStatusClass(r.status)">{{ r.status }}</span></td>
+            <td class="action-icons">
+              <i class="fa-solid fa-eye" title="View" (click)="viewReservation(r)"></i>
+              <i class="fa-solid fa-pen" title="Edit" (click)="openEditModal(i)"></i>
+              <i class="fa-solid fa-trash" title="Delete" (click)="deleteReservation(i)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section>
+      <button class="book-btn" (click)="redirectToBook()"><i class="fa-solid fa-calendar-plus"></i> Book a New Reservation</button>
+    </section>
+    <div class="modal" *ngIf="editModalOpen" style="display:flex;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px #0002;padding:2em 2em 1.5em 2em;max-width:400px;width:95vw;">
+        <h3 style="color:var(--navy);margin-top:0;margin-bottom:0.8em;font-size:1.2rem;font-weight:700;">Edit Reservation</h3>
+        <form (ngSubmit)="saveEditReservation()">
+          <div style="margin-bottom:0.3em;">
+            <label>Room</label>
+            <input type="text" [(ngModel)]="editReservation.room" name="editRoom" readonly style="width:100%;height:40px;background:#f3f4f8;">
+          </div>
+          <div style="margin-bottom:0.3em;">
+            <label>Check-in Date</label>
+            <input type="date" [(ngModel)]="editReservation.checkin" name="editCheckin" required style="width:100%;height:40px;">
+          </div>
+          <div style="margin-bottom:0.3em;">
+            <label>Check-out Date</label>
+            <input type="date" [(ngModel)]="editReservation.checkout" name="editCheckout" required style="width:100%;height:40px;">
+          </div>
+          <div style="margin-bottom:0.3em;">
+            <label>Status</label>
+            <select [(ngModel)]="editReservation.status" name="editStatus" required style="width:100%;height:40px;">
+              <option value="Confirmed">Confirmed</option>
+              <option value="Pending">Pending</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <button type="submit" class="book-btn" style="width:100%;margin-top:0em;">Save Changes</button>
+          <button type="button" class="book-btn" style="background:var(--navy);color:var(--gold);margin-top:-0.4em;width:100%;" (click)="closeEditModal()">Cancel</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

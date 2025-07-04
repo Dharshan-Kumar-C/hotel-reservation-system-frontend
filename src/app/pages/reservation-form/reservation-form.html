@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservation Form | RoyalStay</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-bg">
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+        <a routerLink="/guest-dashboard">Dashboard</a>
+        <a routerLink="/profile">Profile</a>
+        <a routerLink="/login">Logout</a>
+    </nav>
+  </header>
+  <main class="container" style="max-width:900px;margin:auto;display:flex;gap:2em;align-items:center;justify-content:center;">
+    <section class="form-card" style="flex:1;min-width:320px;max-width:420px;">
+      <br>
+      <h2><i class="fa-solid fa-calendar-plus"></i> Book a New Reservation</h2>
+      <br>
+      <form id="reservationForm" autocomplete="off" (ngSubmit)="onSubmit($event)">
+        <div class="form-group" style="margin-bottom:1.5em;">
+          <input type="date" id="checkin" name="checkin" required class="input-enhanced" placeholder=" " style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="checkin" name="checkinModel" (ngModelChange)="setCheckin($event)">
+          <label for="checkin" class="floating-label">Check-in Date</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5em;">
+          <input type="date" id="checkout" name="checkout" required class="input-enhanced" placeholder=" " style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="checkout" name="checkoutModel" (ngModelChange)="setCheckout($event)">
+          <label for="checkout" class="floating-label">Check-out Date</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5em;">
+          <select id="roomType" name="roomType" required class="input-enhanced" style="width:100%;padding-left:2.5em;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="roomType" name="roomTypeModel" (change)="onRoomTypeChange()" (ngModelChange)="setRoomType($event)">
+            <option value="" disabled selected hidden></option>
+            <option value="Deluxe">Deluxe</option>
+            <option value="Standard">Standard</option>
+            <option value="Suite">Suite</option>
+            <option value="Single">Single</option>
+            <option value="Double">Double</option>
+          </select>
+          <label for="roomType" class="floating-label">Room Type</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5em;">
+          <select id="roomNumber" name="roomNumber" required class="input-enhanced" style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="roomNumber" name="roomNumberModel" (change)="onRoomNumberChange()" (ngModelChange)="setRoomNumber($event)">
+            <option value="" disabled selected hidden></option>
+            <option *ngFor="let num of availableRoomNumbers" [value]="num">{{ num }}</option>
+          </select>
+          <label for="roomNumber" class="floating-label">Room Number</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.5em;">
+          <select id="reservationStatus" name="reservationStatus" required class="input-enhanced" style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="reservationStatus" name="reservationStatusModel" (ngModelChange)="setReservationStatus($event)">
+            <option value="" disabled selected hidden></option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Pending">Pending</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <label for="reservationStatus" class="floating-label">Reservation Status</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:1em;margin-bottom:1.7em;position:relative;">
+          <div id="amountDisplay" style="font-size:1.1em;font-weight:600;color:var(--navy);" *ngIf="showAmount">
+            Amount: $<span id="amountValue">{{ amount }}</span>
+          </div>
+          <button type="submit" class="btn" id="proceedBtn" style="margin-bottom:0;padding-top:0.5em;padding-bottom:0.5em;min-height:2.2em;" *ngIf="showProceed">
+            <i class="fa-solid fa-arrow-right"></i> Proceed to Payment
+          </button>
+          <span class="error-message" id="resError" *ngIf="errorMsg && showProceed" style="position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);white-space:nowrap;">{{ errorMsg }}</span>
+        </div>
+      </form>
+    </section>
+    <div id="roomImagePreview" style="flex:1;min-width:450px;max-width:520px;display:flex;align-items:center;justify-content:center;margin-left:3em;">
+      <div style="background:var(--white);border-radius:18px;box-shadow:0 4px 24px #0001;padding:1em 1em;width:99%;display:flex;align-items:center;justify-content:center;min-height:320px;margin:auto;">
+        <ng-container *ngIf="roomImage; else noImage">
+          <img [src]="roomImage" [alt]="roomType + ' Room'" style="width:100%;max-width:390px;height:290px;object-fit:cover;border-radius:14px;box-shadow:0 2px 8px #0001;">
+        </ng-container>
+        <ng-template #noImage>
+          <span style="color:#888;font-size:1.2em;letter-spacing:0.5px;">room image preview</span>
+        </ng-template>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payments | Hotel Reservation</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background: var(--light-gray); min-height: 100vh; margin: 0; display: flex; }
+    .sidebar { width: 230px; background: var(--navy); color: var(--white); min-height: 100vh; padding: 2em 1em 1em 1em; display: flex; flex-direction: column; gap: 2em; position: sticky; top: 0; }
+    .sidebar .logo { font-family: 'Lora', serif; font-size: 1.5rem; color: var(--gold); font-weight: 700; margin-bottom: 2em; text-align: center; }
+    .sidebar nav a { color: var(--white); display: flex; align-items: center; gap: 0.8em; padding: 0.7em 1em; border-radius: var(--radius); margin-bottom: 0.5em; font-weight: 500; transition: background var(--transition), color var(--transition); }
+    .sidebar nav a:hover, .sidebar nav a.active { background: var(--gold); color: var(--navy); }
+    .sidebar .logout { margin-top: auto; color: #ffb300; font-weight: 600; text-align: center; cursor: pointer; transition: color var(--transition); }
+    .sidebar .logout:hover { color: #fff; }
+    .main-panel { flex: 1; padding: 2em 3em; background: var(--light-gray); min-height: 100vh; }
+    .main-panel h2 { color: var(--navy); }
+    .data-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .data-table th, .data-table td { padding: 1em; text-align: left; }
+    .data-table th { background: var(--light-gray); color: var(--navy); font-weight: 600; }
+    .data-table tr:nth-child(even) { background: #f3f4f8; }
+    .data-table tr:hover { background: #fffbe6; }
+    .status-badge { font-weight: 600; border-radius: 8px; padding: 0.2em 0.7em; font-size: 0.95em; }
+    .status-badge.paid { background: #e6f7e6; color: #1a7f37; }
+    .status-badge.pending { background: #fffbe6; color: #b8860b; }
+    .status-badge.failed { background: #ffe6e6; color: #d90429; }
+    @media (max-width: 900px) { .main-panel { padding: 1em; } }
+    @media (max-width: 700px) { body { flex-direction: column; } .sidebar { width: 100%; min-height: auto; flex-direction: row; gap: 1em; padding: 1em; } .sidebar nav { display: flex; flex-direction: row; gap: 1em; } .main-panel { padding: 1em; } }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> Admin</div>
+    <nav>
+      <a routerLink="/admin-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a routerLink="/guests"><i class="fa-solid fa-users"></i> Manage Guests</a>
+      <a routerLink="/rooms"><i class="fa-solid fa-bed"></i> Manage Rooms</a>
+      <a routerLink="/reservations"><i class="fa-solid fa-calendar-check"></i> Manage Reservations</a>
+      <a routerLink="/payments" class="active" ><i class="fa-solid fa-credit-card"></i> View Payments</a>
+    </nav>
+    <div class="logout" style="margin-top:7em;" routerLink="/login"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
+  </aside>
+  <main class="main-panel">
+    <h2>Payments</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Reservation ID</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="!hasPayments">
+          <td colspan="6" style="text-align:center;color:#888;">No payments found.</td>
+        </tr>
+        <tr *ngFor="let payment of payments">
+          <td>{{ payment.paymentId }}</td>
+          <td>{{ payment.reservationId }}</td>
+          <td>${{ payment.paymentAmount }}</td>
+          <td><i [class]="getMethodIcon(payment.paymentMethod)"></i> {{ payment.paymentMethod }}</td>
+          <td><span class="status-badge" [class]="getStatusBadge(payment.paymentStatus)">{{ payment.paymentStatus }}</span></td>
+          <td>{{ payment.paymentDate }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

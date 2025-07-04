@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Payments | Hotel Reservation</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .main-panel { max-width: 900px; margin: 2.5em auto; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2em 2em 1.5em 2em; }
+    .main-panel h2 { color: var(--navy); font-size: 2rem; font-weight: 700; margin-bottom: 1.5em; }
+    .payments-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2em; overflow: hidden; }
+    .payments-table th, .payments-table td { padding: 1em 1.2em; text-align: left; font-size: 1.05em; }
+    .payments-table th { background: var(--light-gray); color: var(--navy); font-weight: 600; }
+    .payments-table tr:nth-child(even) { background: #f3f4f8; }
+    .payments-table tr:hover { background: #fffbe6; }
+    .status { font-weight: 600; border-radius: 8px; padding: 0.2em 0.7em; font-size: 0.95em; }
+    .status.paid { background: #e6f7e6; color: #1a7f37; }
+    .status.pending { background: #fffbe6; color: #b8860b; }
+    .status.failed { background: #ffe6e6; color: #d90429; }
+    @media (max-width: 900px) { .main-panel { padding: 1em 0.5em; } }
+    @media (max-width: 700px) { .main-panel { padding: 0.5em 0.2em; } }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+        <a routerLink="/guest-dashboard">Dashboard</a>
+        <a routerLink="/profile">Profile</a>
+        <a routerLink="/login">Logout</a>
+    </nav>
+  </header>
+  <main class="main-panel">
+    <h2>My Payments</h2>
+    <table class="payments-table" id="paymentsTable">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Reservation</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payments">
+          <td>{{ p.id }}</td>
+          <td>{{ p.reservation }}</td>
+          <td>{{ p.date }}</td>
+          <td>{{ p.amount }}</td>
+          <td><span [innerHTML]="getMethodIcon(p.method)"></span> {{ p.method }}</td>
+          <td><span class="status {{ getStatusClass(p.status) }}">{{ p.status }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>
+

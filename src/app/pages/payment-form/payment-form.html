@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment | RoyalStay</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-bg">
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+        <a routerLink="/guest-dashboard">Dashboard</a>
+        <a routerLink="/profile">Profile</a>
+        <a routerLink="/login">Logout</a>
+    </nav>
+  </header>
+  <main class="container" style="max-width:500px;margin:auto;">
+    <section class="form-card">
+      <br>
+      <h2><i class="fa-solid fa-credit-card"></i> Payment</h2>
+      <br>
+      <ng-container *ngIf="!paymentSuccess && !paymentFailed && !paymentPending">
+        <form id="paymentForm" autocomplete="off" (ngSubmit)="onSubmit($event)">
+          <div class="form-group" style="margin-bottom:0.9em;">
+            <input type="text" id="reservationId" name="reservationId" required placeholder=" " class="input-enhanced" readonly style="background:#f3f4f8;cursor:not-allowed;height:56px;" [(ngModel)]="reservationId" name="reservationIdModel">
+            <label for="reservationId" class="floating-label">Reservation ID</label>
+          </div>
+          <div class="form-group" style="margin-bottom:0.7em;">
+            <input type="date" id="paymentDate" name="paymentDate" readonly style="height:56px;" [(ngModel)]="paymentDate" name="paymentDateModel">
+            <label for="paymentDate" class="floating-label">Payment Date</label>
+          </div>
+          <div class="form-group" style="margin-bottom:1em;">
+            <input type="number" id="amount" name="amount" min="1" required placeholder=" " class="input-enhanced" readonly style="background:#f3f4f8;cursor:not-allowed;height:56px;" [(ngModel)]="amount" name="amountModel">
+            <label for="amount" class="floating-label">Amount</label>
+          </div>
+          <div class="form-group" style="margin-bottom:1.3em;">
+            <select id="method" name="method" required class="input-enhanced" style="height:58px;width:100%;padding: 1.2em 1em 0.5em 1em;line-height:1.2;" [(ngModel)]="method" name="methodModel" (ngModelChange)="setMethod($event)">
+              <option value="" disabled selected hidden></option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="UPI">UPI</option>
+              <option value="CASH">CASH</option>
+            </select>
+            <label for="method" class="floating-label">Payment Method</label>
+          </div>
+          <div class="form-group" style="margin-bottom:1.5em;">
+            <select id="status" name="status" required class="input-enhanced" style="height:58px;width:100%;padding: 1.2em 1em 0.5em 1em;line-height:1.2;" [(ngModel)]="status" name="statusModel" (ngModelChange)="setStatus($event)">
+              <option value="" disabled selected hidden></option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+            </select>
+            <label for="status" class="floating-label">Payment Status</label>
+          </div>
+          <div class="button-row" style="display: flex; align-items: center; gap: 1em;">
+            <button type="submit" class="btn"><i class="fa-solid fa-check"></i> Pay Now</button>
+            <div class="error-message" id="payError" *ngIf="errorMsg">{{ errorMsg }}</div>
+          </div>
+        </form>
+      </ng-container>
+      <ng-container *ngIf="paymentSuccess">
+        <div id="paymentSummary" style="margin-top:2em; text-align:center;">
+          <i class="fa-solid fa-circle-check" style="color:var(--gold);font-size:2em;display:inline-block;margin-bottom:0.3em;"></i><br>
+          <b style="font-size:1.3em;color:#222;">Payment Successful!</b><br>
+          <span style="font-size:1.15em;color:#222;">Your reservation is confirmed.</span>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="paymentFailed">
+        <div id="paymentSummary" style="margin-top:2em; text-align:center;">
+          <i class="fa-solid fa-circle-xmark" style="color:#e74c3c;font-size:2em;display:inline-block;margin-bottom:0.3em;"></i><br>
+          <b style="font-size:1.3em;color:#222;">Payment Failed!</b><br>
+          <span style="font-size:1.15em;color:#222;">Please try again or use a different method.</span>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="paymentPending">
+        <div id="paymentSummary" style="margin-top:2em; text-align:center;">
+          <i class="fa-solid fa-hourglass-half" style="color:#f1c40f;font-size:2em;display:inline-block;margin-bottom:0.3em;"></i><br>
+          <b style="font-size:1.3em;color:#222;">Payment Pending!</b><br>
+          <span style="font-size:1.15em;color:#222;">Your payment is being processed.</span>
+        </div>
+      </ng-container>
+    </section>
+  </main>
+</body>
+</html>

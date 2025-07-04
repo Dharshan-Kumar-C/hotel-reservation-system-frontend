@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guest Login | RoyalStay Hotel</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-bg">
+  <header class="navbar">
+    <div class="logo"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
+    <nav>
+      <a routerLink="/">Home</a>
+      <a routerLink="/login" routerLinkActive="active">Login</a>
+      <a routerLink="/about">About Us</a>
+      <a routerLink="/contact">Contact Us</a>
+    </nav>
+  </header>
+  <div class="login-wrapper" *ngIf="!showRegisterForm">
+    <div class="login-card">
+      <div class="login-header">
+        <i class="fa-solid fa-hotel"></i>
+        <h2>Guest Login</h2>
+      </div>
+      <form #guestLoginForm="ngForm" (ngSubmit)="onGuestLoginSubmit()" autocomplete="off">
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+          <input type="email" id="guest-email" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="email">
+          <label for="guest-email" class="floating-label">Email</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-lock"></i></span>
+          <input #guestPassword type="password" id="guest-password" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="password">
+          <label for="guest-password" class="floating-label">Password</label>
+          <span class="show-password" #guestShowPass (click)="togglePassword('guest')"><i class="fa-solid fa-eye"></i></span>
+        </div>
+        <div class="error-message" #guestError></div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <div style="margin:1.5em 0 0.5em 0;text-align:center;">
+        <span>Don't have an account?</span>
+        <a href="#" id="showRegister" (click)="showRegister($event)" style="color:var(--gold);font-weight:600;">Register</a>
+      </div>
+    </div>
+  </div>
+  <div class="login-wrapper" *ngIf="showRegisterForm">
+    <div class="login-card">
+      <div class="login-header">
+        <i class="fa-solid fa-user-plus"></i>
+        <h2>Guest Registration</h2>
+      </div>
+      <form #guestRegisterForm="ngForm" (ngSubmit)="onRegisterSubmit()" autocomplete="off">
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-user"></i></span>
+          <input type="text" id="regName" name="name" required class="input-enhanced" placeholder=" " [(ngModel)]="name">
+          <label for="regName" class="floating-label">Full Name</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-envelope"></i></span>
+          <input type="email" id="regEmail" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="regEmail">
+          <label for="regEmail" class="floating-label">Email</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
+          <input type="text" id="regAddress" name="address" required class="input-enhanced" placeholder=" " [(ngModel)]="address">
+          <label for="regAddress" class="floating-label">Address</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-phone"></i></span>
+          <input type="tel" id="regPhone" name="phone" required class="input-enhanced" placeholder=" " [(ngModel)]="phone">
+          <label for="regPhone" class="floating-label">Phone Number</label>
+        </div>
+        <div class="form-group" style="margin-bottom:1.7em;">
+          <span class="icon"><i class="fa-solid fa-lock"></i></span>
+          <input #regPassword type="password" id="regPassword" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="regPasswordValue">
+          <label for="regPassword" class="floating-label">Password</label>
+          <span class="show-password" #regShowPass (click)="togglePassword('reg')"><i class="fa-solid fa-eye"></i></span>
+        </div>
+        <div class="error-message" #regError></div>
+        <button type="submit" class="btn">Register</button>
+        <div style="margin-top:1em;text-align:center;">
+          <a href="#" id="backToLogin" (click)="backToLogin($event)" style="color:var(--navy);font-weight:600;">Back to Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
+
