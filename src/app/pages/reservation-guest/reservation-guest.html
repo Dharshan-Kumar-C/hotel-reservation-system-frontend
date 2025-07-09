@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Reservations | Hotel Reservation</title>
+  <title>My Reservations | RoyalStay</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,6 @@
   <style>
     .main-panel { max-width: 1100px; margin: 2.5em auto; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2em 2em 1.5em 2em; }
     .main-panel h2 { color: var(--navy); font-size: 2rem; font-weight: 700; margin-bottom: 1.5em; }
-    .section-title { color: var(--navy); font-size: 1.25rem; font-weight: 600; margin-bottom: 1em; }
     .reservations-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2em; overflow: hidden; }
     .reservations-table th, .reservations-table td { padding: 1em 1.2em; text-align: left; font-size: 1.05em; }
     .reservations-table th { background: var(--light-gray); color: var(--navy); font-weight: 600; }
@@ -44,30 +43,101 @@
     <nav>
     <a routerLink="/guest-dashboard">Dashboard</a>
     <a routerLink="/profile">Profile</a>
-    <a routerLink="/login">Logout</a>
+      <a (click)="logout()" style="cursor:pointer;">Logout</a>
     </nav>
   </header>
   <main class="main-panel">
-    <h2>My Reservations</h2>
+    <h2 style="margin-bottom:0.7em;">My Reservations</h2>
     <section>
-        <table class="reservations-table">
+      <button class="book-btn" (click)="redirectToBook()"><i class="fa-solid fa-calendar-plus"></i> Book a New Reservation</button>
+    </section>
+    <div style="margin-bottom:0.7em;display:flex;gap:1em;align-items:center;">
+      <select [(ngModel)]="roomTypeFilter" (change)="applyFiltersAndSort()" style="height:47px;max-width:200px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+        <option value="">All Room Types</option>
+        <option value="Deluxe">Deluxe</option>
+        <option value="Standard">Standard</option>
+        <option value="Suite">Suite</option>
+        <option value="Single">Single</option>
+        <option value="Double">Double</option>
+      </select>
+      <select [(ngModel)]="statusFilter" (change)="applyFiltersAndSort()" style="height:47px;max-width:200px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+        <option value="">All Status</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Pending">Pending</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+      <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" style="height:47px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;background:white;">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="20">20 per page</option>
+        <option value="50">50 per page</option>
+      </select>
+    </div>
+    <!-- Loading Message -->
+    <div *ngIf="loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading reservations...
+    </div>
+    <!-- Error Message -->
+    <div *ngIf="errorMsg && !loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);font-weight:600;font-size:1.13em;">
+      <i class="fa-solid fa-exclamation-triangle"></i> {{ errorMsg }}
+    </div>
+    <!-- Empty State -->
+    <div *ngIf="!loading && !errorMsg && filteredReservations.length === 0" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:#6c757d;font-size:1.13em;font-weight:600;">
+      <i class="fa-solid fa-calendar-xmark"></i> No reservations found.
+    </div>
+    <table *ngIf="!loading && !errorMsg && filteredReservations.length > 0" class="reservations-table">
         <thead>
           <tr>
-            <th>Reservation ID</th>
-            <th>Room</th>
-            <th>Check-in Date</th>
-            <th>Check-out Date</th>
-            <th>Status</th>
+            <th (click)="onSort('reservationId')" style="cursor:pointer;">
+              Reservation ID
+              <i *ngIf="sortBy === 'reservationId'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'reservationId'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th (click)="onSort('room')" style="cursor:pointer;">
+              Room
+              <i *ngIf="sortBy === 'room'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'room'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th (click)="onSort('checkInDate')" style="cursor:pointer;">
+              Check-in Date
+              <i *ngIf="sortBy === 'checkInDate'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'checkInDate'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th (click)="onSort('checkOutDate')" style="cursor:pointer;">
+              Check-out Date
+              <i *ngIf="sortBy === 'checkOutDate'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'checkOutDate'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th (click)="onSort('price')" style="cursor:pointer;">
+              Price
+              <i *ngIf="sortBy === 'price'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'price'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th (click)="onSort('status')" style="cursor:pointer;">
+              Status
+              <i *ngIf="sortBy === 'status'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+              <i *ngIf="sortBy !== 'status'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+            </th>
+            <th>Payment</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of reservations; let i = index">
-            <td>{{ r.id }}</td>
-            <td>{{ r.room }} <span style="color:var(--navy);font-size:0.98em;">({{ r.type }})</span></td>
-            <td>{{ r.checkin }}</td>
-            <td>{{ r.checkout }}</td>
+          <tr *ngFor="let r of getPaginatedReservations(); let i = index">
+          <td>{{ r.reservationId }}</td>
+          <td>{{ r.room?.roomNumber || r.room }} <span style="color:var(--navy);font-size:0.98em;">({{ r.room?.type }})</span></td>
+          <td>{{ r.checkInDate }}</td>
+          <td>{{ r.checkOutDate }}</td>
+          <td>₹{{ r.price }}</td>
             <td><span class="status" [ngClass]="getStatusClass(r.status)">{{ r.status }}</span></td>
+          <td style="text-align:center;">
+            <i [class]="getPaymentStatus(r) === 'Paid' ? 'fa-solid fa-check-circle' : 'fa-solid fa-credit-card'" 
+               [style.color]="getPaymentStatusColor(getPaymentStatus(r))"
+               [title]="getPaymentStatus(r) ? 'Payment: ' + getPaymentStatus(r) : 'Make Payment'" 
+               (click)="handlePaymentClick(r)"
+               style="cursor:pointer;font-size:1.2em;">
+            </i>
+          </td>
             <td class="action-icons">
               <i class="fa-solid fa-eye" title="View" (click)="viewReservation(r)"></i>
               <i class="fa-solid fa-pen" title="Edit" (click)="openEditModal(i)"></i>
@@ -76,25 +146,55 @@
           </tr>
         </tbody>
       </table>
-    </section>
-    <section>
-      <button class="book-btn" (click)="redirectToBook()"><i class="fa-solid fa-calendar-plus"></i> Book a New Reservation</button>
-    </section>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalPages > 1 && !loading && !errorMsg" style="margin-top: 2em; display: flex; justify-content: center; align-items: center; gap: 1em;">
+      <div style="display: flex; align-items: center; gap: 0.5em;">
+        <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+        <span>({{ totalElements }} total reservations)</span>
+      </div>
+      <div style="display: flex; gap: 0.5em;">
+        <button [disabled]="currentPage === 0" (click)="onPageChange(0)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-left"></i>
+        </button>
+        <button [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button (click)="onPageChange(page)" [style.background]="page === currentPage ? 'var(--navy)' : 'white'" [style.color]="page === currentPage ? 'white' : 'black'" style="padding: 0.5em 1em; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">
+            {{ page + 1 }}
+          </button>
+        </ng-container>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(totalPages - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+
     <div class="modal" *ngIf="editModalOpen" style="display:flex;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:1000;align-items:center;justify-content:center;">
       <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px #0002;padding:2em 2em 1.5em 2em;max-width:400px;width:95vw;">
         <h3 style="color:var(--navy);margin-top:0;margin-bottom:0.8em;font-size:1.2rem;font-weight:700;">Edit Reservation</h3>
         <form (ngSubmit)="saveEditReservation()">
+          <div *ngIf="modalError" style="color:#dc3545;text-align:center;margin-bottom:0.7em;">
+            <i class='fa-solid fa-exclamation-triangle'></i> {{ modalError }}
+          </div>
           <div style="margin-bottom:0.3em;">
             <label>Room</label>
-            <input type="text" [(ngModel)]="editReservation.room" name="editRoom" readonly style="width:100%;height:40px;background:#f3f4f8;">
+            <input type="text"
+                   [value]="editReservation.room?.roomNumber + (editReservation.room?.type ? ' (' + editReservation.room.type + ')' : '')"
+                   readonly
+                   style="width:100%;height:40px;background:#f3f4f8;">
           </div>
           <div style="margin-bottom:0.3em;">
             <label>Check-in Date</label>
-            <input type="date" [(ngModel)]="editReservation.checkin" name="editCheckin" required style="width:100%;height:40px;">
+            <input type="date" [(ngModel)]="editReservation.checkInDate" name="editCheckin" required style="width:100%;height:40px;">
           </div>
           <div style="margin-bottom:0.3em;">
             <label>Check-out Date</label>
-            <input type="date" [(ngModel)]="editReservation.checkout" name="editCheckout" required style="width:100%;height:40px;">
+            <input type="date" [(ngModel)]="editReservation.checkOutDate" name="editCheckout" required style="width:100%;height:40px;">
           </div>
           <div style="margin-bottom:0.3em;">
             <label>Status</label>
@@ -104,8 +204,11 @@
               <option value="Cancelled">Cancelled</option>
             </select>
           </div>
-          <button type="submit" class="book-btn" style="width:100%;margin-top:0em;">Save Changes</button>
-          <button type="button" class="book-btn" style="background:var(--navy);color:var(--gold);margin-top:-0.4em;width:100%;" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" class="book-btn" style="width:100%;margin-top:0em;" [disabled]="modalLoading">
+            <span *ngIf="modalLoading"><i class="fa-solid fa-spinner fa-spin"></i> Saving...</span>
+            <span *ngIf="!modalLoading">Save Changes</span>
+          </button>
+          <button type="button" class="book-btn" style="background:var(--navy);color:var(--gold);margin-top:-0.4em;width:100%;" (click)="closeEditModal()" [disabled]="modalLoading">Cancel</button>
         </form>
       </div>
     </div>

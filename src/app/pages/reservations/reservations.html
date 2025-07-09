@@ -45,16 +45,16 @@
       <a routerLink="/reservations" class="active"><i class="fa-solid fa-calendar-check"></i> Manage Reservations</a>
       <a routerLink="/payments"><i class="fa-solid fa-credit-card"></i> View Payments</a>
     </nav>
-    <div class="logout" style="margin-top:7em;" routerLink="/login"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
+    <div class="logout" style="margin-top:7em;" (click)="logout()"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
   </aside>
   <main class="main-panel">
     <h2>All Reservations</h2>
     <div class="table-actions">
       <button class="btn" (click)="openModal('book')"><i class="fa-solid fa-calendar-plus"></i> Book Reservation</button>
     </div>
-    <div class="filters" style="display:flex;gap:1em;align-items:center;margin-bottom:1.5em;">
-      <input type="text" [(ngModel)]="nameFilter" placeholder="Search by Guest Name" style="height:47px;max-width:220px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
-      <select [(ngModel)]="roomTypeFilter" style="height:47px;max-width:200px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+    <div style="margin-bottom:1.2em;display:flex;gap:1em;align-items:center;">
+      <input type="text" [(ngModel)]="nameFilter" (input)="onNameFilterChange()" placeholder="Search by Guest Name" style="height:47px;max-width:220px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+      <select [(ngModel)]="roomTypeFilter" (change)="onRoomTypeFilterChange()" style="height:47px;max-width:200px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
         <option value="">All Room Types</option>
         <option value="Deluxe">Deluxe</option>
         <option value="Standard">Standard</option>
@@ -62,43 +62,122 @@
         <option value="Single">Single</option>
         <option value="Double">Double</option>
       </select>
-      <select [(ngModel)]="statusFilter">
+      <select [(ngModel)]="statusFilter" (change)="onStatusFilterChange()" style="height:47px;max-width:200px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
         <option value="">All Status</option>
         <option value="Confirmed">Confirmed</option>
         <option value="Pending">Pending</option>
         <option value="Cancelled">Cancelled</option>
       </select>
+      <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" style="height:47px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;background:white;">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="20">20 per page</option>
+        <option value="50">50 per page</option>
+      </select>
     </div>
-    <table class="data-table">
+
+    <!-- Loading Message -->
+    <div *ngIf="loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading reservations...
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMsg && !loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);font-weight:600;font-size:1.13em;">
+      <i class="fa-solid fa-exclamation-triangle"></i> {{ errorMsg }}
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMsg && !loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:#28a745;">
+      <i class="fa-solid fa-check-circle"></i> {{ successMsg }}
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !errorMsg && reservations.length === 0" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:#6c757d;font-size:1.13em;font-weight:600;">
+      <i class="fa-solid fa-calendar-xmark"></i> No reservations found.
+    </div>
+
+    <table *ngIf="!loading && !errorMsg && reservations.length > 0" class="data-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Guest</th>
-          <th>Room</th>
-          <th>Check-in Date</th>
-          <th>Check-out Date</th>
-          <th>Price</th>
-          <th>Status</th>
+          <th (click)="onSort('reservationId')" style="cursor:pointer;">
+            ID
+            <i *ngIf="sortBy === 'reservationId'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'reservationId'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('guest')" style="cursor:pointer;">Guest</th>
+          <th (click)="onSort('room')" style="cursor:pointer;">Room</th>
+          <th (click)="onSort('checkInDate')" style="cursor:pointer;">
+            Check-in Date
+            <i *ngIf="sortBy === 'checkInDate'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'checkInDate'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('checkOutDate')" style="cursor:pointer;">
+            Check-out Date
+            <i *ngIf="sortBy === 'checkOutDate'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'checkOutDate'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('price')" style="cursor:pointer;">
+            Price
+            <i *ngIf="sortBy === 'price'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'price'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('status')" style="cursor:pointer;">
+            Status
+            <i *ngIf="sortBy === 'status'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'status'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let reservation of filteredReservations">
-          <td>{{ reservation.id }}</td>
-          <td>{{ reservation.guestName }}</td>
-          <td>{{ reservation.roomDisplay }}</td>
-          <td>{{ reservation.checkIn }}</td>
-          <td>{{ reservation.checkOut }}</td>
-          <td>${{ reservation.price }}</td>
+        <tr *ngFor="let reservation of reservations">
+          <td>{{ reservation.reservationId }}</td>
+          <td>{{ reservation.guest?.name }}</td>
+          <td>{{ reservation.room ? reservation.room.roomNumber + ' (' + reservation.room.type + ')' : '' }}</td>
+          <td>{{ reservation.checkInDate }}</td>
+          <td>{{ reservation.checkOutDate }}</td>
+          <td>₹{{ reservation.price }}</td>
           <td><span [style.color]="getStatusColor(reservation.status)" style="font-weight:600;">{{ reservation.status }}</span></td>
           <td class="action-icons">
             <i class="fa-solid fa-eye" title="View" (click)="viewReservation(reservation)"></i>
             <i class="fa-solid fa-pen" title="Edit" (click)="editReservation(reservation)"></i>
+            <i [class]="getPaymentStatus(reservation) === 'Paid' ? 'fa-solid fa-check-circle' : 'fa-solid fa-credit-card'" 
+               [style.color]="getPaymentStatusColor(getPaymentStatus(reservation))"
+               [title]="getPaymentStatus(reservation) ? 'Payment: ' + getPaymentStatus(reservation) : 'Make Payment'" 
+               (click)="handlePaymentClick(reservation)"></i>
             <i class="fa-solid fa-trash" title="Delete" (click)="deleteReservation(reservation)"></i>
           </td>
         </tr>
       </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalPages > 1 && !loading && !errorMsg" style="margin-top: 2em; display: flex; justify-content: center; align-items: center; gap: 1em;">
+      <div style="display: flex; align-items: center; gap: 0.5em;">
+        <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+        <span>({{ totalElements }} total reservations)</span>
+      </div>
+      <div style="display: flex; gap: 0.5em;">
+        <button [disabled]="currentPage === 0" (click)="onPageChange(0)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-left"></i>
+        </button>
+        <button [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button (click)="onPageChange(page)" [style.background]="page === currentPage ? 'var(--navy)' : 'white'" [style.color]="page === currentPage ? 'white' : 'black'" style="padding: 0.5em 1em; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">
+            {{ page + 1 }}
+          </button>
+        </ng-container>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(totalPages - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- Modal for Book Reservation -->
     <div class="modal" [class.open]="showBookModal">
       <div class="modal-content" style="padding:0; background:none; box-shadow:none;">
@@ -106,22 +185,56 @@
           <h3 style="color:var(--navy);margin-top:0;margin-bottom:1.5em;font-size:1.4rem;font-weight:700;">Book New Reservation</h3>
           <form (ngSubmit)="addReservation()">
             <div class="form-group" style="margin-bottom:0.2em;">
-              <select [(ngModel)]="newReservation.guestId" name="guestId" required style="height:47px;width:100%;">
-                <option value="">Select Guest</option>
-                <option *ngFor="let guest of guests" [value]="guest.id">{{ guest.id }} - {{ guest.name }}</option>
-              </select>
+              <!-- Guest Search+Select -->
+              <input
+                type="text"
+                class="input-enhanced"
+                name="guestSearch"
+                [(ngModel)]="guestSearch"
+                (input)="filterGuests()"
+                (focus)="filterGuests(); showGuestDropdown = true"
+                (blur)="hideGuestDropdownWithDelay()"
+                style="width:100%;height:47px;"
+                autocomplete="off"
+                placeholder="Search Guest"
+                required
+              />
+              <ul *ngIf="showGuestDropdown" style="position:absolute;z-index:10;left:0;right:0;top:100%;background:white;border:1px solid #ccc;border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;margin:0;padding:0;list-style:none;">
+                <li *ngIf="filteredGuests.length === 0 && guests.length === 0" style="padding:0.7em 1em;color:#888;cursor:default;">No guests available</li>
+                <li *ngIf="filteredGuests.length === 0 && guests.length > 0" style="padding:0.7em 1em;color:#888;cursor:default;">No guests found</li>
+                <li *ngFor="let guest of filteredGuests" (mousedown)="selectGuest(guest)" style="padding:0.7em 1em;cursor:pointer;" [ngClass]="{'selected': guest === newReservation.guest}">
+                  {{ guest.guestId ?? '' }} - {{ guest.name }}
+                </li>
+              </ul>
             </div>
             <div class="form-group" style="margin-bottom:0.2em;">
-              <select [(ngModel)]="newReservation.roomId" name="roomId" (change)="updateRoomPrice()" required style="height:47px;width:100%;">
-                <option value="">Select Room</option>
-                <option *ngFor="let room of rooms" [value]="room.id">{{ room.id }} - {{ room.number }} ({{ room.type }})</option>
-              </select>
+              <!-- Room Search+Select -->
+              <input
+                type="text"
+                class="input-enhanced"
+                name="roomSearch"
+                [(ngModel)]="roomSearch"
+                (input)="filterRooms()"
+                (focus)="filterRooms(); showRoomDropdown = true"
+                (blur)="hideRoomDropdownWithDelay()"
+                style="width:100%;height:47px;"
+                autocomplete="off"
+                placeholder="Search Room Type or No"
+                required
+              />
+              <ul *ngIf="showRoomDropdown" style="position:absolute;z-index:10;left:0;right:0;top:100%;background:white;border:1px solid #ccc;border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;margin:0;padding:0;list-style:none;">
+                <li *ngIf="filteredRooms.length === 0 && rooms.length === 0" style="padding:0.7em 1em;color:#888;cursor:default;">No rooms available</li>
+                <li *ngIf="filteredRooms.length === 0 && rooms.length > 0" style="padding:0.7em 1em;color:#888;cursor:default;">No rooms found</li>
+                <li *ngFor="let room of filteredRooms" (mousedown)="selectRoom(room)" style="padding:0.7em 1em;cursor:pointer;" [ngClass]="{'selected': room === newReservation.room}">
+                  {{ room.roomId }} - {{ room.roomNumber }} ({{ room.type }})
+                </li>
+              </ul>
             </div>
             <div class="form-group" style="margin-bottom:0.4em;">
-              <input type="date" [(ngModel)]="newReservation.checkIn" name="checkIn" required placeholder="Check-in Date" class="input-enhanced" style="height:47px;width:100%;">
+              <input type="date" [(ngModel)]="newReservation.checkInDate" name="checkInDate" required placeholder="Check-in Date" class="input-enhanced" style="height:47px;width:100%;">
             </div>
             <div class="form-group" style="margin-bottom:0.4em;">
-              <input type="date" [(ngModel)]="newReservation.checkOut" name="checkOut" required placeholder="Check-out Date" class="input-enhanced" style="height:47px;width:100%;">
+              <input type="date" [(ngModel)]="newReservation.checkOutDate" name="checkOutDate" required placeholder="Check-out Date" class="input-enhanced" style="height:47px;width:100%;">
             </div>
             <div class="form-group" style="margin-bottom:0.4em;">
               <input type="number" [(ngModel)]="newReservation.price" name="price" required placeholder="Price" class="input-enhanced" style="height:47px;width:100%;background:#f3f4f8;" readonly>
@@ -147,22 +260,16 @@
           <h3 style="color:var(--navy);margin-top:0;margin-bottom:1.5em;font-size:1.4rem;font-weight:700;">Edit Reservation</h3>
           <form (ngSubmit)="saveEditReservation()">
             <div class="form-group" style="margin-bottom:-0.1em;">
-              <select [(ngModel)]="editReservationData.guestId" name="editGuest" required style="height:47px;width:100%;">
-                <option value="">Select Guest</option>
-                <option *ngFor="let guest of guests" [value]="guest.id">{{ guest.id }} - {{ guest.name }}</option>
-              </select>
+              <input type="text" [value]="editReservationData.guest ? editReservationData.guest.guestId + ' - ' + editReservationData.guest.name : ''" readonly style="height:47px;width:100%;background:#f3f4f8;border:1px solid #ccc;border-radius:8px;padding:0 1em;font-size:1em;">
             </div>
             <div class="form-group" style="margin-bottom:-0.1em;">
-              <select [(ngModel)]="editReservationData.roomId" name="editRoom" (change)="updateEditRoomPrice()" required style="height:47px;width:100%;">
-                <option value="">Select Room</option>
-                <option *ngFor="let room of rooms" [value]="room.id">{{ room.id }} - {{ room.number }} ({{ room.type }})</option>
-              </select>
+              <input type="text" [value]="editReservationData.room ? editReservationData.room.roomId + ' - ' + editReservationData.room.roomNumber + ' (' + editReservationData.room.type + ')' : ''" readonly style="height:47px;width:100%;background:#f3f4f8;border:1px solid #ccc;border-radius:8px;padding:0 1em;font-size:1em;">
             </div>
             <div class="form-group" style="margin-bottom:-0.1em;">
-              <input type="date" [(ngModel)]="editReservationData.checkIn" name="editCheckIn" required placeholder="Check-in Date" style="height:47px;width:100%;">
+              <input type="date" [(ngModel)]="editReservationData.checkInDate" name="editCheckInDate" required placeholder="Check-in Date" style="height:47px;width:100%;">
             </div>
             <div class="form-group" style="margin-bottom:-0.1em;">
-              <input type="date" [(ngModel)]="editReservationData.checkOut" name="editCheckOut" required placeholder="Check-out Date" style="height:47px;width:100%;">
+              <input type="date" [(ngModel)]="editReservationData.checkOutDate" name="editCheckOutDate" required placeholder="Check-out Date" style="height:47px;width:100%;">
             </div>
             <div class="form-group" style="margin-bottom:-0.1em;">
               <input type="number" [(ngModel)]="editReservationData.price" name="editPrice" required placeholder="Price" style="height:47px;width:100%;background:#f3f4f8;" readonly>
@@ -184,13 +291,13 @@
     <div class="modal" [class.open]="showPaymentModal">
       <div class="modal-content" style="padding:0; background:none; box-shadow:none;">
         <div class="modal-wrapper" style="background:var(--white); border-radius:20px; box-shadow:var(--shadow); max-width:420px; margin:auto; padding:2.5em 2em 2em 2em;">
-          <h3 style="color:var(--navy);margin-top:0;margin-bottom:1.5em;font-size:1.4rem;font-weight:700;">Make Payment</h3>
+          <h3 style="color:var(--navy);margin-top:0;margin-bottom:1.5em;font-size:1.4rem;font-weight:700;">{{ isEditingPayment ? 'Edit Payment' : 'Make Payment' }}</h3>
           <form (ngSubmit)="submitPayment()">
             <div class="form-group" style="margin-bottom:0.4em;">
               <input type="date" [(ngModel)]="paymentData.paymentDate" name="paymentDate" readonly style="height:47px;width:100%;background:#f3f4f8;">
             </div>
             <div class="form-group" style="margin-bottom:0.4em;">
-              <input type="number" [(ngModel)]="paymentData.paymentAmount" name="paymentAmount" readonly style="height:47px;width:100%;background:#f3f4f8;">
+              <input type="number" [(ngModel)]="paymentData.amountPaid" name="amountPaid" readonly style="height:47px;width:100%;background:#f3f4f8;">
             </div>
             <div class="form-group" style="margin-bottom:0.4em;">
               <select [(ngModel)]="paymentData.paymentMethod" name="paymentMethod" required style="height:47px;width:100%;">
@@ -209,7 +316,7 @@
                 <option value="Failed">Failed</option>
               </select>
             </div>
-            <button type="submit" class="btn" style="width:100%;margin-top:1.2em;">Pay Now</button>
+            <button type="submit" class="btn" style="width:100%;margin-top:1.2em;">{{ isEditingPayment ? 'Update Payment' : 'Pay Now' }}</button>
             <button type="button" class="btn" style="background:var(--navy);color:var(--gold);margin-top:0.7em;width:100%;" (click)="closeModal('payment')">Cancel</button>
           </form>
         </div>

@@ -14,21 +14,31 @@
     <nav>
     <a routerLink="/guest-dashboard">Dashboard</a>
     <a routerLink="/profile" routerLinkActive="active">Profile</a>
-    <a routerLink="/login">Logout</a>
+    <a (click)="logout()" style="cursor: pointer;">Logout</a>
     </nav>
   </header>
   <main style="min-height:80vh;display:flex;align-items:center;justify-content:center;">
     <section class="form-card" style="width:100%;max-width:420px;margin:auto;box-shadow:0 8px 32px #23294618;border-radius:22px;background:#fff;display:flex;flex-direction:column;align-items:center;padding:2.5em 2em;">
       <h2 style="text-align:center;color:var(--navy);margin-bottom:1.5em;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-user" style="color:var(--gold);margin-right:0.5em;"></i> Profile</h2>
-      <div *ngIf="!editMode" id="profileView" style="text-align:center;width:100%;">
+      
+      <div *ngIf="loading" style="text-align:center;color:var(--navy);margin:2em 0;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:2em;color:var(--gold);"></i>
+        <p>Loading profile...</p>
+      </div>
+      <div *ngIf="!loading && errorMsg" style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin:1.5em 0;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:2.2em;color:var(--red);margin-bottom:0.5em;"></i>
+        <div style="color:var(--red);font-size:1.1em;text-align:center;max-width:320px;">{{ errorMsg }}</div>
+      </div>
+      
+      <div *ngIf="!loading && !errorMsg && !editMode" id="profileView" style="text-align:center;width:100%;">
         <div class="profile-row" style="margin-bottom:1em;"><b>Name : </b> <span>{{ profile.name }}</span></div>
         <div class="profile-row" style="margin-bottom:1em;"><b>Email : </b> <span>{{ profile.email }}</span></div>
         <div class="profile-row" style="margin-bottom:1em;"><b>Phone : </b> <span>{{ profile.phone }}</span></div>
         <div class="profile-row" style="margin-bottom:1em;"><b>Address : </b> <span>{{ profile.address }}</span></div>
         <div class="profile-row" style="margin-bottom:1.5em;"><b>Password : </b> <span style="letter-spacing:0.2em;">{{ maskedPassword }}</span></div>
-        <button class="btn" (click)="onEdit()" style="font-size:1.1em;padding:0.7em 2em;"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+        <button class="btn" (click)="onEdit()" style="font-size:1.1em;padding:0.7em 2em;" [disabled]="loading"><i class="fa-solid fa-pen"></i> Edit Profile</button>
       </div>
-      <form *ngIf="editMode" (ngSubmit)="onSubmit()" style="margin-top:1em;width:100%;">
+      <form *ngIf="!loading && !errorMsg && editMode" (ngSubmit)="onSubmit()" style="margin-top:1em;width:100%;">
         <div class="form-group">
           <input type="text" id="editName" name="editName" required class="input-enhanced" placeholder=" " [(ngModel)]="editProfile.name">
           <label for="editName" class="floating-label">Name</label>
@@ -56,8 +66,13 @@
           {{ errorMsg }}
         </div>
         <div style="display:flex;gap:1em;justify-content:center;">
-          <button type="submit" class="btn"><i class="fa-solid fa-save"></i> Save</button>
-          <button type="button" class="btn" (click)="onCancel()" style="background:#eee;color:#232946;"><i class="fa-solid fa-xmark"></i> Cancel</button>
+          <button type="submit" class="btn" [disabled]="loading">
+            <i class="fa-solid" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-save'"></i> 
+            {{ loading ? 'Saving...' : 'Save' }}
+          </button>
+          <button type="button" class="btn" (click)="onCancel()" style="background:#eee;color:#232946;" [disabled]="loading">
+            <i class="fa-solid fa-xmark"></i> Cancel
+          </button>
         </div>
       </form>
       <div *ngIf="showMsg" id="profileMsg" style="margin-top:1em;color:var(--navy);text-align:center;">Profile updated successfully!</div>

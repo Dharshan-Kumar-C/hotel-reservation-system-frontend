@@ -7,6 +7,63 @@
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Disabled states */
+    .input-enhanced:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .show-password.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    a.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Loading button styles */
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .btn:disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Spinner animation */
+    .fa-spinner {
+      margin-right: 8px;
+    }
+
+    /* Simple error message styling */
+    .error-message {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+      text-align: center;
+    }
+
+    /* Form improvements during loading */
+    .form-group input:disabled + .floating-label {
+      opacity: 0.6;
+    }
+
+    .form-group .icon {
+      opacity: 1;
+    }
+
+    .form-group input:disabled ~ .icon {
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body class="login-bg">
   <header class="navbar">
@@ -27,21 +84,24 @@
       <form #guestLoginForm="ngForm" (ngSubmit)="onGuestLoginSubmit()" autocomplete="off">
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-envelope"></i></span>
-          <input type="email" id="guest-email" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="email">
+          <input type="email" id="guest-email" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="email" [disabled]="isLoading">
           <label for="guest-email" class="floating-label">Email</label>
         </div>
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-lock"></i></span>
-          <input #guestPassword type="password" id="guest-password" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="password">
+          <input #guestPassword type="password" id="guest-password" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="password" [disabled]="isLoading">
           <label for="guest-password" class="floating-label">Password</label>
-          <span class="show-password" #guestShowPass (click)="togglePassword('guest')"><i class="fa-solid fa-eye"></i></span>
+          <span class="show-password" #guestShowPass (click)="togglePassword('guest')" [class.disabled]="isLoading"><i class="fa-solid fa-eye"></i></span>
         </div>
         <div class="error-message" #guestError></div>
-        <button type="submit" class="btn">Login</button>
+        <button type="submit" class="btn" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Login</span>
+          <span *ngIf="isLoading"><i class="fa-solid fa-spinner fa-spin"></i> Logging in...</span>
+        </button>
       </form>
       <div style="margin:1.5em 0 0.5em 0;text-align:center;">
         <span>Don't have an account?</span>
-        <a href="#" id="showRegister" (click)="showRegister($event)" style="color:var(--gold);font-weight:600;">Register</a>
+        <a href="#" id="showRegister" (click)="showRegister($event)" style="color:var(--gold);font-weight:600;" [class.disabled]="isLoading">Register</a>
       </div>
     </div>
   </div>
@@ -54,34 +114,37 @@
       <form #guestRegisterForm="ngForm" (ngSubmit)="onRegisterSubmit()" autocomplete="off">
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-user"></i></span>
-          <input type="text" id="regName" name="name" required class="input-enhanced" placeholder=" " [(ngModel)]="name">
+          <input type="text" id="regName" name="name" required class="input-enhanced" placeholder=" " [(ngModel)]="name" [disabled]="isLoading">
           <label for="regName" class="floating-label">Full Name</label>
         </div>
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-envelope"></i></span>
-          <input type="email" id="regEmail" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="regEmail">
+          <input type="email" id="regEmail" name="email" required class="input-enhanced" placeholder=" " [(ngModel)]="regEmail" [disabled]="isLoading">
           <label for="regEmail" class="floating-label">Email</label>
         </div>
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
-          <input type="text" id="regAddress" name="address" required class="input-enhanced" placeholder=" " [(ngModel)]="address">
+          <input type="text" id="regAddress" name="address" required class="input-enhanced" placeholder=" " [(ngModel)]="address" [disabled]="isLoading">
           <label for="regAddress" class="floating-label">Address</label>
         </div>
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-phone"></i></span>
-          <input type="tel" id="regPhone" name="phone" required class="input-enhanced" placeholder=" " [(ngModel)]="phone">
+          <input type="tel" id="regPhone" name="phone" required class="input-enhanced" placeholder=" " [(ngModel)]="phone" [disabled]="isLoading">
           <label for="regPhone" class="floating-label">Phone Number</label>
         </div>
         <div class="form-group" style="margin-bottom:1.7em;">
           <span class="icon"><i class="fa-solid fa-lock"></i></span>
-          <input #regPassword type="password" id="regPassword" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="regPasswordValue">
+          <input #regPassword type="password" id="regPassword" name="password" required class="input-enhanced" placeholder=" " [(ngModel)]="regPasswordValue" [disabled]="isLoading">
           <label for="regPassword" class="floating-label">Password</label>
-          <span class="show-password" #regShowPass (click)="togglePassword('reg')"><i class="fa-solid fa-eye"></i></span>
+          <span class="show-password" #regShowPass (click)="togglePassword('reg')" [class.disabled]="isLoading"><i class="fa-solid fa-eye"></i></span>
         </div>
         <div class="error-message" #regError></div>
-        <button type="submit" class="btn">Register</button>
+        <button type="submit" class="btn" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Register</span>
+          <span *ngIf="isLoading"><i class="fa-solid fa-spinner fa-spin"></i> Registering...</span>
+        </button>
         <div style="margin-top:1em;text-align:center;">
-          <a href="#" id="backToLogin" (click)="backToLogin($event)" style="color:var(--navy);font-weight:600;">Back to Login</a>
+          <a href="#" id="backToLogin" (click)="backToLogin($event)" style="color:var(--navy);font-weight:600;" [class.disabled]="isLoading">Back to Login</a>
         </div>
       </form>
     </div>

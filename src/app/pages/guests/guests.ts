@@ -1,7 +1,9 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { GuestService, Guest } from '../../services/guest.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-guests',
@@ -9,39 +11,32 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './guests.html',
   styleUrl: './guests.css'
 })
-export class Guests {
+export class Guests implements OnInit {
   @ViewChild('addGuestModal') addGuestModal!: ElementRef;
   @ViewChild('editGuestModal') editGuestModal!: ElementRef;
   @ViewChild('addGuestPassword') addGuestPassword!: ElementRef;
   @ViewChild('addEyeIcon') addEyeIcon!: ElementRef;
+  @ViewChild('editGuestPassword') editGuestPassword!: ElementRef;
+  @ViewChild('editEyeIcon') editEyeIcon!: ElementRef;
   @ViewChild('guestNameFilter') guestNameFilter!: ElementRef;
 
-  guests = [
-    {
-      id: 1,
-      name: 'Jane Doe',
-      email: 'jane@example.com',
-      phone: '+1 234 567 890',
-      address: '123 Main St',
-      password: 'password123'
-    },
-    {
-      id: 2,
-      name: 'John Smith',
-      email: 'john@example.com',
-      phone: '+1 987 654 321',
-      address: '456 Oak Ave',
-      password: 'secret456'
-    }
-  ];
-
-  editingRow: any = null;
-  guestIdCounter = 3;
+  guests: Guest[] = [];
+  editingRow: Guest | null = null;
   showAddModal = false;
   showEditModal = false;
+  loading = false;
+  errorMsg = '';
+
+  // Pagination properties
+  currentPage = 0;
+  pageSize = 5;
+  totalPages = 0;
+  totalElements = 0;
+  sortBy = 'name';
+  sortDir = 'asc';
 
   // Form data for add guest
-  newGuest = {
+  newGuest: Guest = {
     name: '',
     email: '',
     phone: '',
@@ -50,7 +45,7 @@ export class Guests {
   };
 
   // Form data for edit guest
-  editGuestData = {
+  editGuestData: Guest = {
     name: '',
     email: '',
     phone: '',
@@ -59,32 +54,77 @@ export class Guests {
   };
 
   searchFilter = '';
+  searchTimeout: any = null;
 
-  viewGuest(guest: any) {
-    alert(`Guest Details:\nID: ${guest.id}\nName: ${guest.name}\nEmail: ${guest.email}\nPhone: ${guest.phone}\nAddress: ${guest.address}\nPassword: ${guest.password}`);
+  constructor(
+    private guestService: GuestService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    this.fetchGuests();
   }
 
-  editGuest(guest: any) {
+  fetchGuests() {
+    this.loading = true;
+    this.guestService.getPaged(this.currentPage, this.pageSize, this.sortBy, this.sortDir, this.searchFilter).subscribe({
+      next: (data) => {
+        this.guests = data.content || data;
+        this.totalPages = data.totalPages || 0;
+        this.totalElements = data.totalElements || 0;
+        this.currentPage = data.number || 0;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errorMsg = 'Failed to load guests.';
+        this.loading = false;
+      }
+    });
+  }
+
+  viewGuest(guest: Guest) {
+    alert(`Guest Details:\nID: ${guest.guestId}\nName: ${guest.name}\nEmail: ${guest.email}\nPhone: ${guest.phone}\nAddress: ${guest.address}\nPassword: ${guest.password}`);
+  }
+
+  editGuest(guest: Guest) {
     this.editingRow = guest;
     this.editGuestData = { ...guest };
     this.showEditModal = true;
   }
 
   saveEditGuest() {
-    if (!this.editingRow) return;
-    
-    const index = this.guests.findIndex(g => g.id === this.editingRow.id);
-    if (index !== -1) {
-      this.guests[index] = { ...this.editGuestData, id: this.editingRow.id };
-    }
-    
+    if (!this.editingRow || !this.editGuestData.guestId) return;
+    this.loading = true;
+    this.guestService.update(this.editGuestData.guestId, this.editGuestData).subscribe({
+      next: (updated) => {
+        const idx = this.guests.findIndex(g => g.guestId === updated.guestId);
+        if (idx !== -1) this.guests[idx] = updated;
     this.showEditModal = false;
     this.editingRow = null;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errorMsg = 'Failed to update guest.';
+        this.loading = false;
+      }
+    });
   }
 
-  deleteGuest(guest: any) {
+  deleteGuest(guest: Guest) {
+    if (!guest.guestId) return;
     if (confirm(`Are you sure you want to delete guest: ${guest.name}?`)) {
-      this.guests = this.guests.filter(g => g.id !== guest.id);
+      this.loading = true;
+      this.guestService.delete(guest.guestId).subscribe({
+        next: () => {
+          // Refresh the current page to get updated data
+          this.fetchGuests();
+        },
+        error: (err) => {
+          this.errorMsg = 'Failed to delete guest.';
+          this.loading = false;
+        }
+      });
     }
   }
 
@@ -111,15 +151,20 @@ export class Guests {
       alert('Please fill in all fields.');
       return;
     }
-
-    const newGuest = {
-      id: this.guestIdCounter++,
-      ...this.newGuest
-    };
-
-    this.guests.push(newGuest);
+    this.loading = true;
+    this.guestService.create(this.newGuest).subscribe({
+      next: (created) => {
+        // Go to first page to see the new guest
+        this.currentPage = 0;
+        this.fetchGuests();
     this.showAddModal = false;
     this.newGuest = { name: '', email: '', phone: '', address: '', password: '' };
+      },
+      error: (err) => {
+        this.errorMsg = 'Failed to add guest.';
+        this.loading = false;
+      }
+    });
   }
 
   togglePassword() {
@@ -137,18 +182,68 @@ export class Guests {
     }
   }
 
-  get filteredGuests() {
-    if (!this.searchFilter.trim()) {
-      return this.guests;
-    }
+  toggleEditPassword() {
+    const pwd = this.editGuestPassword.nativeElement;
+    const eye = this.editEyeIcon.nativeElement;
     
-    const filter = this.searchFilter.toLowerCase();
-    return this.guests.filter(guest => 
-      guest.name.toLowerCase().includes(filter)
-    );
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      eye.classList.remove('fa-eye');
+      eye.classList.add('fa-eye-slash');
+    } else {
+      pwd.type = 'password';
+      eye.classList.remove('fa-eye-slash');
+      eye.classList.add('fa-eye');
+    }
   }
 
-  getMaskedPassword(password: string): string {
-    return '*'.repeat(password.length);
+  onSearchFilterChange() {
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.currentPage = 0;
+      this.fetchGuests();
+    }, 300);
+  }
+
+  // Pagination methods
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.fetchGuests();
+  }
+
+  onSort(column: string) {
+    if (this.sortBy === column) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = column;
+      this.sortDir = 'asc';
+    }
+    this.currentPage = 0; // Reset to first page when sorting
+    this.fetchGuests();
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.fetchGuests();
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const startPage = Math.max(0, this.currentPage - 2);
+    const endPage = Math.min(this.totalPages - 1, this.currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  getMaskedPassword(password: string | undefined): string {
+    return password ? '*'.repeat(password.length) : '';
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

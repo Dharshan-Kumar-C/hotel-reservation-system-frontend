@@ -14,7 +14,7 @@
   <header class="navbar" style="background:#232946; color:#FFD700;">
     <div class="logo" style="color:#FFD700;"><i class="fa-solid fa-hotel"></i> RoyalStay</div>
     <nav>
-      <a routerLink="/login" style="color:#fff;">Logout</a>
+      <a (click)="logout()" style="color:#fff; cursor: pointer;">Logout</a>
     </nav>
   </header>
   <section class="dashboard-banner" style="background:linear-gradient(rgba(26,26,64,0.7), rgba(26,26,64,0.7)), url('assets/images/standard.jpg') center/cover no-repeat; color:var(--white); min-height:160px; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; margin-bottom:2em;">
@@ -26,23 +26,35 @@
       <section class="summary-cards" style="display:flex; flex-wrap:wrap; gap:2em; justify-content:center; margin-bottom:2.5em;">
         <a routerLink="/guests" class="summary-card" style="background:#fff; border-radius:18px; box-shadow:0 4px 24px #23294618; padding:2em 2.5em; min-width:180px; text-align:center; text-decoration:none; transition:box-shadow 0.2s;">
           <i class="fa-solid fa-users" style="font-size:2em; color:#232946;"></i>
-          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">120</div>
-          <div >Guests</div>
+          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">
+            <span *ngIf="loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <span *ngIf="!loading">{{ totalGuests }}</span>
+          </div>
+          <div>Guests</div>
         </a>
         <a routerLink="/rooms" class="summary-card" style="background:#fff; border-radius:18px; box-shadow:0 4px 24px #23294618; padding:2em 2.5em; min-width:180px; text-align:center; text-decoration:none; transition:box-shadow 0.2s;">
           <i class="fa-solid fa-bed" style="font-size:2em; color:#232946;"></i>
-          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">45</div>
-          <div >Rooms</div>
+          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">
+            <span *ngIf="loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <span *ngIf="!loading">{{ totalRooms }}</span>
+          </div>
+          <div>Rooms</div>
         </a>
         <a routerLink="/reservations" class="summary-card" style="background:#fff; border-radius:18px; box-shadow:0 4px 24px #23294618; padding:2em 2.5em; min-width:180px; text-align:center; text-decoration:none; transition:box-shadow 0.2s;">
           <i class="fa-solid fa-calendar-check" style="font-size:2em; color:#232946;"></i>
-          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">32</div>
-          <div >Reservations</div>
+          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">
+            <span *ngIf="loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <span *ngIf="!loading">{{ totalReservations }}</span>
+          </div>
+          <div>Reservations</div>
         </a>
         <a routerLink="/payments" class="summary-card" style="background:#fff; border-radius:18px; box-shadow:0 4px 24px #23294618; padding:2em 2.5em; min-width:180px; text-align:center; text-decoration:none; transition:box-shadow 0.2s;">
           <i class="fa-solid fa-credit-card" style="font-size:2em; color:#232946;"></i>
-          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">$12,500</div>
-          <div >Payments</div>
+          <div style="font-size:1.5em; font-weight:700; margin:0.5em 0 0.2em 0;">
+            <span *ngIf="loading"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <span *ngIf="!loading">₹{{ totalPayments | number:'1.0-0' }}</span>
+          </div>
+          <div>Total Revenue</div>
         </a>
       </section>
       <section style="text-align:center; margin-top:1em;">

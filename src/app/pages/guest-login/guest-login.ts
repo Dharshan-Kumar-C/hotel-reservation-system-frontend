@@ -2,6 +2,7 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { GuestAuthService, Guest } from '../../services/guest-auth.service';
 
 @Component({
   selector: 'app-guest-login',
@@ -30,8 +31,12 @@ export class GuestLogin {
   regPasswordValue = '';
 
   showRegisterForm = false;
+  isLoading = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private guestAuthService: GuestAuthService
+  ) {}
 
   togglePassword(input: 'guest' | 'reg') {
     let passInput, icon;
@@ -52,39 +57,98 @@ export class GuestLogin {
   }
 
   onGuestLoginSubmit() {
-    if (!this.email.trim() || !this.password.trim()) {
-      this.guestError.nativeElement.textContent = 'Please enter both email and password.';
-      this.guestError.nativeElement.style.display = 'block';
+    this.email = this.email.trim();
+    this.password = this.password.trim();
+    if (!this.email || !this.password) {
+      this.showError('Please enter both email and password.', 'guest');
       return;
     }
-    alert('Guest login successful! Redirecting to guest-dashboard.');
-    this.router.navigate(['/guest-dashboard']);
+
+    this.isLoading = true;
+    this.hideError('guest');
+
+    this.guestAuthService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        alert('Guest login successful! Redirecting to guest dashboard.');
+        this.router.navigate(['/guest-dashboard']);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.showError(error, 'guest');
+      }
+    });
   }
 
   showRegister(e: Event) {
     e.preventDefault();
     this.showRegisterForm = true;
+    this.hideError('guest');
+    this.hideError('reg');
   }
 
   backToLogin(e: Event) {
     e.preventDefault();
     this.showRegisterForm = false;
+    this.hideError('guest');
+    this.hideError('reg');
   }
 
   onRegisterSubmit() {
     if (!this.name.trim() || !this.regEmail.trim() || !this.address.trim() || !this.phone.trim() || !this.regPasswordValue.trim()) {
-      this.regError.nativeElement.textContent = 'Please fill all fields.';
-      this.regError.nativeElement.style.display = 'block';
+      this.showError('Please fill all fields.', 'reg');
       return;
     }
-    this.regError.nativeElement.style.display = 'none';
-    alert('Registration successful! You can now log in.');
-    // Reset registration fields
-    this.name = '';
-    this.regEmail = '';
-    this.address = '';
-    this.phone = '';
-    this.regPasswordValue = '';
-    this.showRegisterForm = false;
+
+    this.isLoading = true;
+    this.hideError('reg');
+
+    const guestData: Guest = {
+      name: this.name.trim(),
+      email: this.regEmail.trim(),
+      address: this.address.trim(),
+      phone: this.phone.trim(),
+      password: this.regPasswordValue
+    };
+
+    this.guestAuthService.register(guestData).subscribe({
+          next: (response) => {
+          this.isLoading = false;
+          alert('Registration successful! You can now log in.');
+          // Reset registration fields
+          this.name = '';
+          this.regEmail = '';
+          this.address = '';
+          this.phone = '';
+          this.regPasswordValue = '';
+          this.showRegisterForm = false;
+          // Redirect to guest login page
+          this.router.navigate(['/guest-login']);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          alert('Registration successful! You can now log in.');
+          // Reset registration fields
+          this.name = '';
+          this.regEmail = '';
+          this.address = '';
+          this.phone = '';
+          this.regPasswordValue = '';
+          this.showRegisterForm = false;
+          // Redirect to guest login page
+          this.router.navigate(['/guest-login']);
+        }
+    });
+  }
+
+  private showError(message: string, form: 'guest' | 'reg') {
+    const errorElement = form === 'guest' ? this.guestError : this.regError;
+    errorElement.nativeElement.textContent = message;
+    errorElement.nativeElement.style.display = 'block';
+  }
+
+  private hideError(form: 'guest' | 'reg') {
+    const errorElement = form === 'guest' ? this.guestError : this.regError;
+    errorElement.nativeElement.style.display = 'none';
   }
 }

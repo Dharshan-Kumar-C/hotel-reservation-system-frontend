@@ -31,33 +31,105 @@
     <nav>
         <a routerLink="/guest-dashboard">Dashboard</a>
         <a routerLink="/profile">Profile</a>
-        <a routerLink="/login">Logout</a>
+        <a (click)="logout()" style="cursor:pointer;">Logout</a>
     </nav>
   </header>
   <main class="main-panel">
-    <h2>My Payments</h2>
-    <table class="payments-table" id="paymentsTable">
+    <h2 style="margin-bottom:0.7em;">My Payments</h2>
+    <div style="margin-bottom:0.7em;display:flex;gap:1em;align-items:center;">
+      <input type="text" [(ngModel)]="reservationIdFilter" (input)="applyFiltersAndSort()" placeholder="Search by Reservation ID" style="height:47px;max-width:250px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+      <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" style="height:47px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;background:white;">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="20">20 per page</option>
+        <option value="50">50 per page</option>
+      </select>
+    </div>
+    <!-- Loading Message -->
+    <div *ngIf="loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading payments...
+    </div>
+    <!-- Error Message -->
+    <div *ngIf="errorMsg && !loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);font-weight:600;font-size:1.13em;">
+      <i class="fa-solid fa-exclamation-triangle"></i> {{ errorMsg }}
+    </div>
+    <!-- Empty State -->
+    <div *ngIf="!loading && !errorMsg && filteredPayments.length === 0" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:#6c757d;font-size:1.13em;font-weight:600;">
+      <i class="fa-solid fa-money-bill-wave"></i> {{ reservationIdFilter ? 'No payments found for the specified reservation ID' : 'No payments found.' }}
+    </div>
+    <table *ngIf="!loading && !errorMsg && filteredPayments.length > 0" class="payments-table" id="paymentsTable">
       <thead>
         <tr>
-          <th>Payment ID</th>
-          <th>Reservation</th>
-          <th>Date</th>
-          <th>Amount</th>
-          <th>Method</th>
-          <th>Status</th>
+          <th (click)="onSort('paymentId')" style="cursor:pointer;">
+            Payment ID
+            <i *ngIf="sortBy === 'paymentId'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'paymentId'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('reservation')" style="cursor:pointer;">
+            Reservation ID
+            <i *ngIf="sortBy === 'reservation'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'reservation'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('paymentDate')" style="cursor:pointer;">
+            Date
+            <i *ngIf="sortBy === 'paymentDate'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'paymentDate'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('amountPaid')" style="cursor:pointer;">
+            Amount
+            <i *ngIf="sortBy === 'amountPaid'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'amountPaid'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('paymentMethod')" style="cursor:pointer;">
+            Method
+            <i *ngIf="sortBy === 'paymentMethod'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'paymentMethod'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('paymentStatus')" style="cursor:pointer;">
+            Status
+            <i *ngIf="sortBy === 'paymentStatus'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'paymentStatus'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of payments">
-          <td>{{ p.id }}</td>
-          <td>{{ p.reservation }}</td>
-          <td>{{ p.date }}</td>
-          <td>{{ p.amount }}</td>
-          <td><span [innerHTML]="getMethodIcon(p.method)"></span> {{ p.method }}</td>
-          <td><span class="status {{ getStatusClass(p.status) }}">{{ p.status }}</span></td>
+        <tr *ngFor="let p of getPaginatedPayments()">
+          <td>{{ p.paymentId }}</td>
+          <td>{{ p.reservation?.reservationId }}</td>
+          <td>{{ p.paymentDate }}</td>
+          <td>₹{{ p.amountPaid }}</td>
+          <td><span [innerHTML]="getMethodIcon(p.paymentMethod)"></span> {{ p.paymentMethod }}</td>
+          <td><span class="status {{ getStatusClass(p.paymentStatus) }}">{{ p.paymentStatus }}</span></td>
         </tr>
-      </tbody>
-    </table>
+              </tbody>
+      </table>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalPages > 1 && !loading && !errorMsg" style="margin-top: 2em; display: flex; justify-content: center; align-items: center; gap: 1em;">
+      <div style="display: flex; align-items: center; gap: 0.5em;">
+        <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+        <span>({{ totalElements }} total payments)</span>
+      </div>
+      <div style="display: flex; gap: 0.5em;">
+        <button [disabled]="currentPage === 0" (click)="onPageChange(0)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-left"></i>
+        </button>
+        <button [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button (click)="onPageChange(page)" [style.background]="page === currentPage ? 'var(--navy)' : 'white'" [style.color]="page === currentPage ? 'white' : 'black'" style="padding: 0.5em 1em; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">
+            {{ page + 1 }}
+          </button>
+        </ng-container>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button [disabled]="currentPage === totalPages - 1" (click)="onPageChange(totalPages - 1)" style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;" [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
   </main>
 </body>
 </html>

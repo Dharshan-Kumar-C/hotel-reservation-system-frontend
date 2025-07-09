@@ -49,31 +49,73 @@
       <a routerLink="/reservations"><i class="fa-solid fa-calendar-check"></i> Manage Reservations</a>
       <a routerLink="/payments"><i class="fa-solid fa-credit-card"></i> View Payments</a>
     </nav>
-    <div class="logout" style="margin-top:7em;" routerLink="/login"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
+    <div class="logout" style="margin-top:7em;" (click)="logout()"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
   </aside>
   <main class="main-panel">
     <h2>All Guests</h2>
     <div class="table-actions" style="display:flex;gap:1em;align-items:center;">
       <button class="btn" (click)="openModal('add')"><i class="fa-solid fa-user-plus"></i> Add Guest</button>
     </div>
-    <div style="margin-bottom:1.2em;">
-      <input type="text" [(ngModel)]="searchFilter" placeholder="Search by Name" style="height:47px;max-width:220px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+    <div style="margin-bottom:1.2em;display:flex;gap:1em;align-items:center;">
+      <input type="text" [(ngModel)]="searchFilter" (input)="onSearchFilterChange()" placeholder="Search by Name" style="height:47px;max-width:220px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;">
+      <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" style="height:47px;padding:0 1em;border:1px solid #ccc;border-radius:8px;font-size:1em;background:white;">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="20">20 per page</option>
+        <option value="50">50 per page</option>
+      </select>
     </div>
-    <table class="data-table">
+
+    <!-- Loading Message -->
+    <div *ngIf="loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);">
+      <i class="fa-solid fa-spinner fa-spin"></i> Loading guests...
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMsg && !loading" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:var(--navy);font-weight:600;font-size:1.13em;">
+      <i class="fa-solid fa-exclamation-triangle"></i> {{ errorMsg }}
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !errorMsg && guests.length === 0" style="text-align:center;padding:2em;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1em;color:#6c757d;font-size:1.13em;font-weight:600;">
+      <i class="fa-solid fa-users-slash"></i> No guests found.
+    </div>
+
+    <table *ngIf="!loading && !errorMsg && guests.length > 0" class="data-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Address</th>
+          <th (click)="onSort('guestId')" style="cursor:pointer;">
+            ID 
+            <i *ngIf="sortBy === 'guestId'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'guestId'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('name')" style="cursor:pointer;">
+            Name 
+            <i *ngIf="sortBy === 'name'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'name'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('email')" style="cursor:pointer;">
+            Email 
+            <i *ngIf="sortBy === 'email'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'email'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('phone')" style="cursor:pointer;">
+            Phone 
+            <i *ngIf="sortBy === 'phone'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'phone'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
+          <th (click)="onSort('address')" style="cursor:pointer;">
+            Address 
+            <i *ngIf="sortBy === 'address'" class="fa-solid" [class.fa-sort-up]="sortDir === 'asc'" [class.fa-sort-down]="sortDir === 'desc'"></i>
+            <i *ngIf="sortBy !== 'address'" class="fa-solid fa-sort" style="opacity:0.3;"></i>
+          </th>
           <th>Password</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let guest of filteredGuests">
-          <td>{{ guest.id }}</td>
+        <tr *ngFor="let guest of guests">
+          <td>{{ guest.guestId }}</td>
           <td>{{ guest.name }}</td>
           <td>{{ guest.email }}</td>
           <td>{{ guest.phone }}</td>
@@ -87,6 +129,63 @@
         </tr>
       </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalPages > 1" style="margin-top: 2em; display: flex; justify-content: center; align-items: center; gap: 1em;">
+      <div style="display: flex; align-items: center; gap: 0.5em;">
+        <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+        <span>({{ totalElements }} total guests)</span>
+      </div>
+      
+      <div style="display: flex; gap: 0.5em;">
+        <!-- First Page -->
+        <button 
+          [disabled]="currentPage === 0" 
+          (click)="onPageChange(0)"
+          style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;"
+          [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-left"></i>
+        </button>
+        
+        <!-- Previous Page -->
+        <button 
+          [disabled]="currentPage === 0" 
+          (click)="onPageChange(currentPage - 1)"
+          style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;"
+          [style.opacity]="currentPage === 0 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        
+        <!-- Page Numbers -->
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button 
+            (click)="onPageChange(page)"
+            [style.background]="page === currentPage ? 'var(--navy)' : 'white'"
+            [style.color]="page === currentPage ? 'white' : 'black'"
+            style="padding: 0.5em 1em; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">
+            {{ page + 1 }}
+          </button>
+        </ng-container>
+        
+        <!-- Next Page -->
+        <button 
+          [disabled]="currentPage === totalPages - 1" 
+          (click)="onPageChange(currentPage + 1)"
+          style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;"
+          [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        
+        <!-- Last Page -->
+        <button 
+          [disabled]="currentPage === totalPages - 1" 
+          (click)="onPageChange(totalPages - 1)"
+          style="padding: 0.5em 1em; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px;"
+          [style.opacity]="currentPage === totalPages - 1 ? '0.5' : '1'">
+          <i class="fa-solid fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
     <!-- Modal for Add Guest -->
     <div class="modal" [class.open]="showAddModal">
       <div class="modal-content">
@@ -132,8 +231,11 @@
           <div class="form-group">
             <input type="text" [(ngModel)]="editGuestData.address" name="editAddress" required placeholder="Address" style="height:47px;">
           </div>
-          <div class="form-group">
-            <input type="text" [(ngModel)]="editGuestData.password" name="editPassword" required placeholder="Password" style="height:47px;">
+          <div class="form-group" style="position:relative;">
+            <input #editGuestPassword type="password" [(ngModel)]="editGuestData.password" name="editPassword" required placeholder="Password" style="height:47px;">
+            <span (click)="toggleEditPassword()" style="position:absolute;top:38%;right:1em;transform:translateY(-50%);cursor:pointer;color:#888;font-size:1.1em;">
+              <i class="fa-solid fa-eye" #editEyeIcon></i>
+            </span>
           </div>
           <button type="submit" class="btn">Save Changes</button>
           <button type="button" class="btn" style="background:var(--navy);color:var(--gold);margin-top:0.5em;" (click)="closeModal('edit')">Cancel</button>

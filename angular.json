@@ -29,8 +29,17 @@
                 "output": "assets"
               }
             ],
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
+              },
+              "fonts": true
+            },
             "styles": [
-              "src/styles.css"
+              "src/styles.css",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css"
             ]
           },
           "configurations": {
@@ -38,7 +47,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "700kB",
                   "maximumError": "1MB"
                 },
                 {
@@ -52,7 +61,14 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "700kB",
+                  "maximumError": "1MB"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -87,7 +103,8 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.css",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css"
             ]
           }
         }

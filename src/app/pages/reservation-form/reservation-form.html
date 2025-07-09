@@ -14,7 +14,7 @@
     <nav>
         <a routerLink="/guest-dashboard">Dashboard</a>
         <a routerLink="/profile">Profile</a>
-        <a routerLink="/login">Logout</a>
+        <a (click)="logout()" style="cursor:pointer;">Logout</a>
     </nav>
   </header>
   <main class="container" style="max-width:900px;margin:auto;display:flex;gap:2em;align-items:center;justify-content:center;">
@@ -42,12 +42,45 @@
           </select>
           <label for="roomType" class="floating-label">Room Type</label>
         </div>
-        <div class="form-group" style="margin-bottom:1.5em;">
-          <select id="roomNumber" name="roomNumber" required class="input-enhanced" style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="roomNumber" name="roomNumberModel" (change)="onRoomNumberChange()" (ngModelChange)="setRoomNumber($event)">
-            <option value="" disabled selected hidden></option>
-            <option *ngFor="let num of availableRoomNumbers" [value]="num">{{ num }}</option>
-          </select>
-          <label for="roomNumber" class="floating-label">Room Number</label>
+        <div class="form-group" style="margin-bottom:1.5em;position:relative;">
+          <input
+            type="text"
+            id="roomNumberSearch"
+            name="roomNumberSearch"
+            class="input-enhanced"
+            style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;"
+            [(ngModel)]="roomNumberSearch"
+            (input)="filterRoomNumbers()"
+            (focus)="filterRoomNumbers(); showRoomDropdown = true"
+            (blur)="hideDropdownWithDelay()"
+            autocomplete="off"
+          />
+          <label for="roomNumberSearch" class="floating-label">Room Number</label>
+          <ul
+            *ngIf="showRoomDropdown"
+            style="position:absolute;z-index:10;left:0;right:0;top:100%;background:white;border:1px solid #ccc;border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;margin:0;padding:0;list-style:none;"
+          >
+            <li
+              *ngIf="filteredRoomNumbers.length === 0 && availableRoomNumbers.length === 0"
+              style="padding:0.7em 1em;color:#888;cursor:default;"
+            >
+              No rooms available
+            </li>
+            <li
+              *ngIf="filteredRoomNumbers.length === 0 && availableRoomNumbers.length > 0"
+              style="padding:0.7em 1em;color:#888;cursor:default;"
+            >
+              No rooms found
+            </li>
+            <li
+              *ngFor="let num of filteredRoomNumbers"
+              (mousedown)="selectRoomNumber(num)"
+              style="padding:0.7em 1em;cursor:pointer;"
+              [ngClass]="{'selected': num === roomNumber}"
+            >
+              {{ num }}
+            </li>
+          </ul>
         </div>
         <div class="form-group" style="margin-bottom:1.5em;">
           <select id="reservationStatus" name="reservationStatus" required class="input-enhanced" style="width:100%;padding-top:0.4em;padding-bottom:0.4em;min-height:3em;" [(ngModel)]="reservationStatus" name="reservationStatusModel" (ngModelChange)="setReservationStatus($event)">
@@ -58,12 +91,12 @@
           </select>
           <label for="reservationStatus" class="floating-label">Reservation Status</label>
         </div>
-        <div style="display:flex;align-items:center;gap:1em;margin-bottom:1.7em;position:relative;">
-          <div id="amountDisplay" style="font-size:1.1em;font-weight:600;color:var(--navy);" *ngIf="showAmount">
-            Amount: $<span id="amountValue">{{ amount }}</span>
+        <div style="display:flex;align-items:center;gap:3em;margin-bottom:1.7em;position:relative;">
+          <div id="amountDisplay" style="font-size:1.1em;font-weight:600;color:var(--navy);padding-left:0.6em;" *ngIf="showAmount">
+            Amount: ₹<span id="amountValue">{{ amount }}</span>
           </div>
-          <button type="submit" class="btn" id="proceedBtn" style="margin-bottom:0;padding-top:0.5em;padding-bottom:0.5em;min-height:2.2em;" *ngIf="showProceed">
-            <i class="fa-solid fa-arrow-right"></i> Proceed to Payment
+          <button type="submit" class="btn" id="proceedBtn" style="margin-bottom:0;padding-top:0.7em;padding-bottom:0.7em;min-height:2.5em;font-size:1.1em;min-width:120px;" *ngIf="showProceed">
+            <i class="fa-solid fa-arrow-right"></i> Proceed
           </button>
           <span class="error-message" id="resError" *ngIf="errorMsg && showProceed" style="position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);white-space:nowrap;">{{ errorMsg }}</span>
         </div>
