@@ -147,7 +147,7 @@ export class PaymentGuest implements OnInit {
   }
 
   getMethodIcon(method: string): string {
-    if (method === 'Credit Card') return '<i class="fa-solid fa-credit-card" style="color:#181c3a;margin-right:0.5em;"></i>';
+    if (method === 'Credit Card' || method === 'Debit Card') return '<i class="fa-solid fa-credit-card" style="color:#181c3a;margin-right:0.5em;"></i>';
     if (method === 'UPI') return '<i class="fa-solid fa-qrcode" style="color:#1a7f37;margin-right:0.5em;"></i>';
     return '<i class="fa-solid fa-money-bill" style="color:#b8860b;margin-right:0.5em;"></i>';
   }
